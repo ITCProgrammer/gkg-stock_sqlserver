@@ -1,0 +1,160 @@
+<?PHP
+error_reporting(0);
+session_start();
+// instance objek
+$barang     = new Barang();
+$barangout  = new BarangKeluar();
+$db         = new Database();
+?>
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>Barang</title>
+</head>
+
+<body>
+<div class="row">
+  <div class="col-xs-12">
+    <div class="box">
+<div class="box-header">
+  <a href="#" data-toggle="modal" data-target="#DataStock" class="btn btn-success "><i class="fa fa-plus-circle"></i> Add</a>
+      </div>
+<div class="box-body">
+<table width="100%" id="example1" class="table table-bordered table-hover">
+ <thead class="btn-success">
+  <tr>
+    <th width="2%">No</th>
+    <th width="9%">Tgl</th>
+    <th width="9%">Kode</th>
+    <th width="18%">Nama</th>
+    <th width="9%">Jenis</th>
+    <th width="9%">Jumlah</th>
+    <th width="9%">Satuan</th>
+    <th width="9%">Harga</th>
+    <th width="9%">Total</th>
+    <th width="9%">UserID</th>
+    <th width="10%">Action</th>
+  </tr>
+  </thead>
+  <tbody>
+  <?php
+$col=0;
+$no=1;
+foreach($barangout->tampil_data_out($idsub) as $rowd){
+	 $bgcolor = ($col++ & 1) ? 'gainsboro' : 'antiquewhite';
+      ?>
+  <tr bgcolor="<?php echo $bgcolor; ?>">
+    <td><?php echo $no;?></td>
+    <td align="left"><?php echo $rowd['tanggal'];?></td>
+    <td><a href="#" class="open_detailinout" id="<?php echo $rowd['idb']; ?>"><?php echo $rowd['kode'];?> <span class="label label-danger"><?php echo $rowd['jml'];?></span></a></td>
+    <td align="center"><?php echo $rowd['nama']; ?></td>
+    <td align="right"><?php echo $rowd['jenis'];?></td>
+    <td align="right"><?php echo $rowd['jumlah'];?></td>
+    <td align="center"><?php echo $rowd['satuan'];?></td>
+    <td align="right"><?php echo $rowd['harga'];?></td>
+    <td align="right"><?php echo $rowd['total_harga'];?></td>
+    <td align="center"><?php echo $rowd['userid'];?></td>
+    <td align="center"><div class="btn-group">
+      <a href="#" class="btn btn-info btn-sm open_editstokout <?php if($_SESSION['lvlQC']==3){echo "disabled"; } ?>" id="<?php echo $rowd['id'] ?>"><i class="fa fa-edit"></i> </a>
+      <a href="#" class="btn btn-danger btn-sm <?php if($_SESSION['lvlQC']==3){echo "disabled"; } ?>" onclick="confirm_delete1('./hapusstockout-<?php echo $rowd['id'] ?>/');"><i class="fa fa-trash"></i> </a></div>
+    </td>
+  </tr>
+  <?php
+  $no++;} ?>
+  </tbody>
+</table>
+
+<div class="modal fade" id="DataStock">
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+            <form class="form-horizontal" name="modal_popup" data-toggle="validator" method="post" action="input-stock-out/" enctype="multipart/form-data">
+              <div class="modal-header">
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span></button>
+                <h4 class="modal-title">Data Barang Out</h4>
+              </div>
+              <div class="modal-body">
+                  <input type="hidden" id="userid" name="userid" value="<?php echo $_SESSION['userQC']; ?>">
+                  <input type="hidden" id="idsub" name="idsub" value="<?php echo $_SESSION['subQC']; ?>">
+                  <div class="form-group">
+                  <label for="kode" class="col-md-3 control-label">Kode</label>
+                  <div class="col-md-8">
+                    <select class="form-control select2" name="kode" style="width: 100%;">
+                      <option value=""> </option>
+                    	<?php  foreach($barang->tampil_databarang($idsub) as $rowd1){ ?>
+                      <option value="<?php echo $rowd1['id'];?>" ><?php echo $rowd1['kode']." | ".$rowd1['nama']." | ".$rowd1['jumlah'];?></option>
+                      <?php } ?>
+                    </select>
+                  <span class="help-block with-errors"></span>
+                  </div>
+                  </div>
+                  <div class="form-group">
+                  <label for="jumlah" class="col-md-3 control-label">Jumlah</label>
+                  <div class="col-md-2">
+                  <input type="number" class="form-control" id="jumlah" name="jumlah" placeholder="0" min="0" step="1" data-bind="value:jumlah">
+                  <span class="help-block with-errors"></span>
+                  </div>
+                  </div>
+                  <div class="form-group">
+                  <label for="note" class="col-md-3 control-label">Note</label>
+                  <div class="col-md-8">
+                  <textarea name="note" rows="8" cols="80" class="form-control" id="note"></textarea>
+                  <span class="help-block with-errors"></span>
+                  </div>
+                  </div>
+
+              </div>
+              <div class="modal-footer">
+                <button type="button" class="btn btn-default pull-left" data-dismiss="modal">Close</button>
+                <button type="submit" class="btn btn-primary" >Save</button>
+              </div>
+            </form>
+            </div>
+            <!-- /.modal-content -->
+  </div>
+          <!-- /.modal-dialog -->
+</div>
+<!-- Modal Popup untuk delete-->
+<div class="modal fade" id="modal_delete_barang" tabindex="-1" >
+  <div class="modal-dialog modal-sm" >
+    <div class="modal-content" style="margin-top:100px;">
+      <div class="modal-header">
+        <button type="button" class="close"  data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title" style="text-align:center;">Are you sure to delete this information ?</h4>
+      </div>
+
+      <div class="modal-footer" style="margin:0px; border-top:0px; text-align:center;">
+        <a href="#" class="btn btn-danger" id="delete_link1">Delete</a>
+        <button type="button" class="btn btn-success" data-dismiss="modal">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal Popup untuk Edit-->
+<div id="StokOutEdit" class="modal fade" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+</div>
+<div id="DetailInOut" class="modal fade modal-3d-slit" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+</div>
+</div>
+</body>
+<!-- Javascript untuk popup modal Delete-->
+<script type="text/javascript">
+    function confirm_delete1(delete_url)
+    {
+      $('#modal_delete_barang').modal('show', {backdrop: 'static'});
+      document.getElementById('delete_link1').setAttribute('href' , delete_url);
+    }
+
+</script>
+<script type="text/javascript">
+    function confirm_delete2(delete_url)
+    {
+      $('#modal_delete_barang1').modal('show', {backdrop: 'static'});
+      document.getElementById('delete_link2').setAttribute('href' , delete_url);
+    }
+
+</script>
+</html>

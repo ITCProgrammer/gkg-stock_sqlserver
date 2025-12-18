@@ -1,0 +1,102 @@
+RewriteEngine On
+Options +FollowSymLinks
+
+<IfModule mod_headers.c>
+<FilesMatch "\.(svg|ttf|otf|eot|woff|woff2|ico|font.css|fonts.css|css|js)$">
+    Header set Access-Control-Allow-Origin "*"
+</FilesMatch>
+</IfModule>
+
+<ifModule mod_deflate.c>
+  <filesMatch ".(css|js|html|php)$">
+    SetOutputFilter DEFLATE
+  </filesMatch>
+
+  <FilesMatch ".(flv|gif|jpg|jpeg|png|ico|swf|js|pdf)$">
+  Header set Cache-Control "max-age=2592000"
+</FilesMatch>
+
+</ifModule>
+
+
+
+# static
+RewriteRule ^$                          index.php [L]
+RewriteRule ^index/?$	 				          index.php [L]
+RewriteRule ^lockscreen/?$	 						lockscreen.php [L]
+RewriteRule ^login/?$	 									models/usersmodel.php?page=login
+RewriteRule ^([a-zA-Z0-9_-]+)$ 					index1.php?page=$1 [L]
+RewriteRule ^logout/?$	 								index1.php?page=logout
+RewriteRule ^input-user/?$	 						models/usersmodel.php?page=input-user
+RewriteRule ^update-user/?$	 						models/usersmodel.php?page=update-user
+RewriteRule ^hapus-user-(.*)/?$	 				models/usersmodel.php?page=hapus-user&id=$1
+
+RewriteRule ^input-stock/?$	 						models/barangmodel.php?page=input-stock
+RewriteRule ^update-stock/?$	 					models/barangmodel.php?page=update-stock
+RewriteRule ^hapusstock/?$	 						models/barangmodel.php?page=hapusstock
+RewriteRule ^hapusstock-(.*)/?$	 				models/barangmodel.php?page=hapusstock&id=$1
+
+RewriteRule ^input-permohonan/?$	 						models/permohonanmodel.php?page=input-permohonan
+RewriteRule ^update-permohonan/?$	 					models/permohonanmodel.php?page=update-permohonan
+RewriteRule ^add-detail-permohonan/?$	 					models/permohonanmodel.php?page=add-detail-permohonan
+RewriteRule ^hapuspermohonan/?$	 						models/permohonanmodel.php?page=hapuspermohonan
+RewriteRule ^hapuspermohonan-(.*)/?$	 				models/permohonanmodel.php?page=hapuspermohonan&id=$1
+
+
+RewriteRule ^input-stock-in/?$	 				models/barangmasukmodel.php?page=input-stock-in
+RewriteRule ^update-stock-in/?$	 				models/barangmasukmodel.php?page=update-stock-in
+RewriteRule ^hapusstockin/?$	 					models/barangmasukmodel.php?page=hapusstockin
+RewriteRule ^hapusstockin-(.*)/?$	 		  models/barangmasukmodel.php?page=hapusstockin&id=$1
+
+RewriteRule ^input-stock-out/?$	 				models/barangkeluarmodel.php?page=input-stock-out
+RewriteRule ^update-stock-out/?$	 			models/barangkeluarmodel.php?page=update-stock-out
+RewriteRule ^hapusstockout/?$	 					models/barangkeluarmodel.php?page=hapusstockout
+RewriteRule ^hapusstockout-(.*)/?$	 	  models/barangkeluarmodel.php?page=hapusstockout&id=$1
+
+RewriteRule ^input-satuan/?$	 					models/satuanmodel.php?page=input-satuan
+RewriteRule ^update-satuan/?$	 					models/satuanmodel.php?page=update-satuan
+RewriteRule ^hapussatuan/?$	 						models/satuanmodel.php?page=hapussatuan
+RewriteRule ^hapussatuan-(.*)/?$	 			models/satuanmodel.php?page=hapussatuan&id=$1
+
+RewriteRule ^input-opname/?$	 				  models/opnamemodel.php?page=input-opname
+RewriteRule ^hapusopname/?$	 						models/opnamemodel.php?page=hapusopname
+RewriteRule ^hapusopname-(.*)/?$	 			models/opnamemodel.php?page=hapusopname&id=$1
+
+RewriteRule ^change-password/?$	 				models/usersmodel.php?page=change-password
+
+RewriteRule ^cetak/lapbarang/(.*)/(.*)?$	 			       views/pages/cetak/lapbarang.php?idsub=$1&min=$2
+RewriteRule ^cetak/lapstockopname/(.*)/(.*)/(.*)?$	 	 views/pages/cetak/lapstockopname.php?tgl1=$1&tgl2=$2&idsub=$3
+RewriteRule ^cetak/lapstokin/(.*)/(.*)/(.*)?$	 			   views/pages/cetak/lapstok-in.php?tgl1=$1&tgl2=$2&idsub=$3
+RewriteRule ^cetak/lapstokout/(.*)/(.*)/(.*)?$	 			 views/pages/cetak/lapstok-out.php?tgl1=$1&tgl2=$2&idsub=$3
+RewriteRule ^cetak/bpp/(.*)/(.*)?$	 			       views/pages/cetak/bpp-html.php?idsub=$1&id=$2
+
+RewriteRule ^cetak/lapkartustok						 	 views/pages/cetak/lapkartustok.php
+RewriteRule ^bsdetail		      						 views/pages/barang.php
+
+ErrorDocument 404    										blank.php
+RewriteRule ^404/?$ 										404.php
+
+AddType image/svg+xml svg svgz
+AddType application/octet-stream .pdf
+
+
+# proc/self/environ? no way!
+RewriteCond %{QUERY_STRING} proc/self/environ [OR]
+
+# Block out any script trying to set a mosConfig value through the URL
+RewriteCond %{QUERY_STRING} mosConfig_[a-zA-Z_]{1,21}(=|\%3D) [OR]
+
+# Block out any script trying to base64_encode crap to send via URL
+RewriteCond %{QUERY_STRING} base64_encode.*(.*) [OR]
+
+# Block out any script that includes a <script> tag in URL
+RewriteCond %{QUERY_STRING} (<|%3C).*script.*(>|%3E) [NC,OR]
+
+# Block out any script trying to set a PHP GLOBALS variable via URL
+RewriteCond %{QUERY_STRING} GLOBALS(=|[|\%[0-9A-Z]{0,2}) [OR]
+
+# Block out any script trying to modify a _REQUEST variable via URL
+RewriteCond %{QUERY_STRING} _REQUEST(=|[|\%[0-9A-Z]{0,2})
+
+# Send all blocked request to homepage with 403 Forbidden error!
+RewriteRule ^(.*)$ index.php [F,L]
