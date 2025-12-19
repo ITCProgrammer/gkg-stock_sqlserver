@@ -1,8 +1,8 @@
 # folders
-/bower_components/
-/dist/
-/database/
-/plugins/
+# /bower_components/
+# /dist/
+# /database/
+# /plugins/
 
 # file
-.htaccess
+# .htaccess
