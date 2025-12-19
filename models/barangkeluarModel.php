@@ -28,9 +28,22 @@ $barangout->update_barang_out($_POST['id'],$_POST['jumlah'],$note,$id,$selisih);
  	header("location:../stok-out");
 }
 // ## BARANG-OUT-DELETE
-elseif($page == "hapusstockout"){
-$id=$barangout->show_data_outid($_GET['id']);
-$jumlah=$barangout->show_data_outjml($_GET['id']);
-$barangout->hapus_barang_out($_GET['id'],$id,$jumlah);
- 	header("location:../stok-out");
+	elseif ($page == "hapusstockout") {
+
+	$raw = $_GET['id'] ?? '';
+	$cleanId = preg_replace('/\D+/', '', (string) $raw); // buang selain angka
+
+	if ($cleanId === '') {
+		die("ID tidak valid: " . htmlspecialchars($raw));
+	}
+
+	$id = (int) $cleanId;
+
+	$idb = $barangout->show_data_outid($id);
+	$jumlah = $barangout->show_data_outjml($id);
+
+	$barangout->hapus_barang_out($id, $idb, $jumlah);
+
+	header("location:../stok-out");
+	exit;
 }

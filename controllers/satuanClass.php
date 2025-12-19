@@ -1,47 +1,73 @@
 <?php
-class Satuan extends Database{
-	public function __construct()
+class Satuan extends Database
+{
+    protected $conn;
+
+    public function __construct()
     {
+        // Pastikan Database kamu punya method connectSQLSRV() (sqlsrv_connect)
         $this->conn = $this->connectMySQLi();
+        if ($this->conn === false) {
+            die(print_r(sqlsrv_errors(), true));
+        }
     }
-  // tampilkan data dari tabel satuan
-  public function tampil_data()
-  {
-      $query=$this->conn->query("SELECT * FROM tbl_satuan");
-      while ($d=mysqli_fetch_array($query)) {
-          $result[]=$d;
-      }
-      return $result;
-  }
+
+    private function run($sql, $params = [], $options = [])
+    {
+        $stmt = sqlsrv_query($this->conn, $sql, $params, $options);
+        if ($stmt === false) {
+            die(print_r(sqlsrv_errors(), true));
+        }
+        return $stmt;
+    }
+
+    // tampilkan data dari tabel satuan
+    public function tampil_data()
+    {
+        $sql = "SELECT * FROM invgkg.tbl_satuan";
+        $stmt = $this->run($sql);
+
+        $result = [];
+        while ($d = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
+            $result[] = $d;
+        }
+        return $result;
+    }
 
     // proses input data satuan
     public function input_satuan($satu, $ket)
     {
-        $sql="INSERT INTO tbl_satuan(satuan,ket) VALUES ('$satu','$ket')";
-		$this->conn->query($sql);
+        $sql = "INSERT INTO invgkg.tbl_satuan (satuan, ket)
+                VALUES (?, ?)";
+        $this->run($sql, [$satu, $ket]);
     }
 
-    // tampilkan data dari tabel users yang akan di edit
+    // tampilkan data dari tabel satuan yang akan di edit
     public function edit_satuan($id)
     {
-        $data=$this->conn->query("SELECT * FROM tbl_satuan WHERE id='$id'");
-        while ($x=mysqli_fetch_array($data)) {
-            $hasil[]=$x;
+        $sql = "SELECT * FROM invgkg.tbl_satuan WHERE id = ?";
+        $stmt = $this->run($sql, [$id]);
+
+        $hasil = [];
+        while ($x = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
+            $hasil[] = $x;
         }
         return $hasil;
     }
 
-    // proses update data user
+    // proses update data satuan
     public function update_satuan($id, $satu, $ket)
     {
-    	$this->conn->query("UPDATE tbl_satuan SET
-  				satuan='$satu',
-  				ket='$ket'
-  				WHERE id='$id'");
+        $sql = "UPDATE invgkg.tbl_satuan
+                SET satuan = ?, ket = ?
+                WHERE id = ?";
+        $this->run($sql, [$satu, $ket, $id]);
     }
-    // proses delete data project
+
+    // proses delete data satuan
     public function hapus_satuan($id)
     {
-        $this->conn->query("DELETE FROM tbl_satuan where id='$id'");
+        $sql = "DELETE FROM invgkg.tbl_satuan WHERE id = ?";
+        $this->run($sql, [$id]);
     }
 }

@@ -284,7 +284,7 @@ desired effect
           <li class="header">SUB DEPT: <?php echo $_SESSION['subQC']; ?></li>
           <!-- Optionally, you can add icons to the links -->
           <li class="<?php if ($page=="home" or $page=="" ) { echo"active"; } ?>"><a href="home"><i class="fa fa-dashboard text-black"></i> <span>DashBoard</span></a></li>
-          <li class="treeview <?php if ($page=="barang" or $page=="stok-in" or $page=="stok-out" or $page=="lapstok-in" or $page=="lapstok-out" or $page=="stok-opname" or $page=="lapstok-opname" or $page=="permohonan") { echo"active"; }?>">
+          <li class="treeview <?php if ($page=="barang" or $page=="stok-in" or $page=="stok-out" or $page=="lapstok-in" or $page=="lapstok-out" or $page=="stok-opname" or $page=="lapstok-opname" ) { echo"active"; }?>">
             <a href="#"><i class="fa fa-database text-blue"></i> <span>Stock</span>
               <span class="pull-right-container">
                 <i class="fa fa-angle-left pull-right"></i>
@@ -292,9 +292,9 @@ desired effect
             </a>
             <ul class="treeview-menu">
               <li class="<?php if ($page=="barang") { echo"active"; } ?>"><a href="barang"><i class="fa fa-bank text-purple"></i> <span>Data Stock</span></a></li>
-			  <?php if($_SESSION['lvlQC']!=3) {?>
+			  <!-- <?php if($_SESSION['lvlQC']!=3) {?>
 			  <li class="<?php if ($page=="permohonan") { echo"active"; } ?>"><a href="permohonan"><i class="fa fa-file text-yellow"></i> <span>Bon Permohonan</span></a></li>		
-			  <?php  } ?>
+			  <?php  } ?> -->
 			  <li class="<?php if ($page=="stok-in") { echo"active"; } ?>"><a href="stok-in"><i class="fa fa-arrow-left text-green"></i> <span>Stock In</span></a></li>
               <li class="<?php if ($page=="stok-out") { echo"active"; } ?>"><a href="stok-out"><i class="fa fa-arrow-right text-red"></i> <span>Stock Out</span></a></li>
                <?php if($_SESSION['lvlQC']!=3) {?>

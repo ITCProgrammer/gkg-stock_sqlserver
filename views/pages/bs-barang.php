@@ -56,13 +56,15 @@
 		}?>
 		</td>
 	    <td><?=$data['jenis_kain']?></td>
-		<td><?=$data['qty_masuk']?></td>
+		<td>
+			<?=number_format((float) ($data['qty_masuk'] ?? 0), 2, '.', '')?>
+		</td>
 		<td><?php 
 				if (array_key_exists($data['id'],$roll_masuk)) {
 				echo $roll_m = $roll_masuk[$data['id']];
 			} else { echo $roll_m = 0 ;}?>
 		</td>
-		<td><?=$keluar?></td>
+		<td><?=number_format((float) ($keluar ?? 0), 2, '.', '')?></td>
 		<td><?php 
 				if (array_key_exists($data['id'],$roll_keluar)) {
 				echo $roll_k = $roll_keluar[$data['id']];

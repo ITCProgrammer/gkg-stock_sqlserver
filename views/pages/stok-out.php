@@ -40,29 +40,63 @@ $db         = new Database();
   </thead>
   <tbody>
   <?php
-$col=0;
-$no=1;
-foreach($barangout->tampil_data_out($idsub) as $rowd){
-	 $bgcolor = ($col++ & 1) ? 'gainsboro' : 'antiquewhite';
+      $col=0;
+      $no=1;
+
+      // FIX: pastikan idsub ada
+      $idsub = $_SESSION['subQC'] ?? '';
+
+      $dataOut = $barangout->tampil_data_out($idsub);
+
+      if ($dataOut === false) {
+          echo "<tr><td colspan='11'>";
+          echo "<b>Error query tampil_data_out</b><br>";
+          echo "<pre>" . print_r(($barangout->last_error ?? sqlsrv_errors()), true) . "</pre>";
+          echo "</td></tr>";
+      } elseif (empty($dataOut)) {
+          echo "<tr><td colspan='11' align='center'>Data kosong</td></tr>";
+      } else {
+          foreach ($dataOut as $rowd) {
+              $bgcolor = ($col++ & 1) ? 'gainsboro' : 'antiquewhite';
+
+              // FIX: tanggal dari sqlsrv bisa DateTime object
+              $tgl = $rowd['tanggal'] ?? '';
+              if ($tgl instanceof DateTime) {
+                  $tgl = $tgl->format('Y-m-d');
+              }
       ?>
-  <tr bgcolor="<?php echo $bgcolor; ?>">
-    <td><?php echo $no;?></td>
-    <td align="left"><?php echo $rowd['tanggal'];?></td>
-    <td><a href="#" class="open_detailinout" id="<?php echo $rowd['idb']; ?>"><?php echo $rowd['kode'];?> <span class="label label-danger"><?php echo $rowd['jml'];?></span></a></td>
-    <td align="center"><?php echo $rowd['nama']; ?></td>
-    <td align="right"><?php echo $rowd['jenis'];?></td>
-    <td align="right"><?php echo $rowd['jumlah'];?></td>
-    <td align="center"><?php echo $rowd['satuan'];?></td>
-    <td align="right"><?php echo $rowd['harga'];?></td>
-    <td align="right"><?php echo $rowd['total_harga'];?></td>
-    <td align="center"><?php echo $rowd['userid'];?></td>
-    <td align="center"><div class="btn-group">
-      <a href="#" class="btn btn-info btn-sm open_editstokout <?php if($_SESSION['lvlQC']==3){echo "disabled"; } ?>" id="<?php echo $rowd['id'] ?>"><i class="fa fa-edit"></i> </a>
-      <a href="#" class="btn btn-danger btn-sm <?php if($_SESSION['lvlQC']==3){echo "disabled"; } ?>" onclick="confirm_delete1('./hapusstockout-<?php echo $rowd['id'] ?>/');"><i class="fa fa-trash"></i> </a></div>
-    </td>
-  </tr>
-  <?php
-  $no++;} ?>
+      <tr bgcolor="<?php echo $bgcolor; ?>">
+        <td><?php echo $no; ?></td>
+        <td align="left"><?php echo $tgl; ?></td>
+        <td>
+          <a href="#" class="open_detailinout" id="<?php echo $rowd['idb']; ?>">
+            <?php echo $rowd['kode']; ?>
+            <span class="label label-danger"></span>
+          </a>
+        </td>
+        <td align="center"><?php echo $rowd['nama']; ?></td>
+        <td align="right"><?php echo $rowd['jenis']; ?></td>
+        <td align="right"><?php echo $rowd['jumlah']; ?></td>
+        <td align="center"><?php echo $rowd['satuan']; ?></td>
+        <td align="right"><?php echo $rowd['harga']; ?></td>
+        <td align="right"><?php echo number_format($rowd['total_harga'], 2, '.', ''); ?></td>        
+        <td align="center"><?php echo $rowd['userid']; ?></td>
+        <td align="center">
+          <div class="btn-group">
+            <a href="#" class="btn btn-info btn-sm open_editstokout <?php if(($_SESSION['lvlQC'] ?? 0)==3){echo "disabled"; } ?>" id="<?php echo $rowd['id'] ?>">
+              <i class="fa fa-edit"></i>
+            </a>
+            <a href="#" class="btn btn-danger btn-sm <?php if(($_SESSION['lvlQC'] ?? 0)==3){echo "disabled"; } ?>" onclick="confirm_delete1('./hapusstockout-<?php echo $rowd['id'] ?>/.');">
+              <i class="fa fa-trash"></i>
+            </a>
+          </div>
+        </td>
+      </tr>
+      <?php
+              $no++;
+          }
+      }
+?>
   </tbody>
 </table>
 

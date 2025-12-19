@@ -26,9 +26,22 @@ $barangin->update_barang_in($_POST['id'],$_POST['jumlah'],$note,$id,$selisih);
  	header("location:../stok-in");
 }
 // ## BARANG-IN-DELETE
-elseif($page == "hapusstockin"){
-$id=$barangin->show_data_inid($_GET['id']);
-$jumlah=$barangin->show_data_injml($_GET['id']);
-$barangin->hapus_barang_in($_GET['id'],$id,$jumlah);
- 	header("location:../stok-in");
+elseif ($page == "hapusstockin") {
+
+	$raw = $_GET['id'] ?? '';
+	$cleanId = preg_replace('/\D+/', '', (string) $raw); 
+
+	if ($cleanId === '') {
+		die("ID tidak valid: " . htmlspecialchars($raw));
+	}
+
+	$id = (int) $cleanId;
+
+	$idb = $barangin->show_data_inid($id);
+	$jumlah = $barangin->show_data_injml($id);
+
+	$barangin->hapus_barang_in($id, $idb, $jumlah);
+
+	header("location:../stok-in");
+	exit;
 }

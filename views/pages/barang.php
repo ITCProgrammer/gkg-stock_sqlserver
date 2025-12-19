@@ -70,7 +70,7 @@ foreach($barang->tampil_data($idsub,$min) as $rowd){
     <td align="left"><?php echo $rowd['nama'];?></td>
     <td align="center"><?php echo $rowd['jenis']; ?><?php if($stt=="YA"){ ?><br><i class='fa fa-warning text-yellow  blink_me'></i> <span class='label label-danger'>Harus Ditambah</span><?php } ?><?php if($stt=="YA1"){ ?><br><i class='fa fa-warning text-yellow  blink_me'></i> <span class='label label-warning'>Stok Hampir Habis</span><?php } ?></td>
     <td align="right"><?php echo $rowd['harga'];?></td>
-    <td align="right"><?php echo $rowd['jumlah'];?></td>
+    <td align="right"><?= number_format($rowd['jumlah'], 2, '.', '') ?></td>
     <td align="right"><?php echo $rowd['satuan'];?></td>
     <td align="right"><?php echo $rowd['jumlah_min'];?></td>
     <td align="right"><?php echo $rowd['jumlah_min_a'];?></td>

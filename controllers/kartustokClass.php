@@ -1,98 +1,148 @@
 <?php
-class Kartustok extends Database{
-	public function __construct()
+class Kartustok extends Database
+{
+    public function __construct()
     {
         $this->conn = $this->connectMySQLi();
-    }
-	
-	public function barang($id) {
-		$query = $this->conn->query("select * from TBL_BARANG where id = $id");
-		$row = mysqli_fetch_array($query);
-		return $row;
-	}
-	
-	public function group_by($tabel,$id_barang,$tgl_awal,$tgl_akhir) 
-{
-   
-    $query = "SELECT tanggal, sum(jumlah) as jumlah from $tabel  where id_barang  = '$id_barang' and  tanggal between '$tgl_awal' and '$tgl_akhir' group by tanggal";
-    //$query = $this->conn->query($query);
-	$result = $this->conn->query($query);
-
-    $output = [];
-
-    if (mysqli_num_rows($result) > 0) {
-        while ($row = mysqli_fetch_assoc($result)) {
-            $output[$row['tanggal']] = $row['jumlah'];
+        if ($this->conn === false) {
+            die(print_r(sqlsrv_errors(), true));
         }
     }
-    return $output;
-}
 
+    private function norm_table($tabel)
+    {
+        // cegah injection dari nama tabel (karena nama tabel tidak bisa pakai parameter "?")
+        if (!preg_match('/^[A-Za-z0-9_\.]+$/', $tabel)) {
+            die("Nama tabel tidak valid");
+        }
 
-function stok_cek($tabel,$id_barang,$tgl_awal){
-  
-    $query = "SELECT sum(jumlah) as jumlah from $tabel  where id_barang  = '$id_barang' and  tanggal  < '$tgl_awal' ";
-    // $query = $this->conn->query($query);
-	$result = $this->conn->query( $query);
-    if ($result) {
-        $row = mysqli_fetch_assoc($result);
-        return $row['jumlah'];
-    } else {
-        return 0 ;
+        // kalau tidak ada schema, pakai dbo.
+        if (strpos($tabel, '.') === false) {
+            return 'invgkg.' . $tabel;
+        }
+        return $tabel;
     }
-}
 
-function stok_awal($id_barang,$tgl_awal) {
+    private function exec($sql, $params = [])
+    {
+        $stmt = sqlsrv_query($this->conn, $sql, $params);
+        if ($stmt === false) {
+            die(print_r(sqlsrv_errors(), true));
+        }
+        return $stmt;
+    }
 
-    $awal_in = $this->stok_cek('tbl_barang_in',$id_barang,$tgl_awal);
-    $awal_out = $this->stok_cek('tbl_barang_out',$id_barang,$tgl_awal);
-    $awal_stok = $awal_in - $awal_out;
-    return $awal_stok;
-}
+    public function barang($id)
+    {
+        $stmt = $this->exec("SELECT TOP 1 * FROM invgkg.TBL_BARANG WHERE id = ?", [$id]);
+        $row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC);
+        return $row;
+    }
 
-function formater($nilaiDecimal) {
-   
-    $nilaiDecimal = floatval($nilaiDecimal);
+    public function group_by($tabel, $id_barang, $tgl_awal, $tgl_akhir)
+    {
+        $tabel = $this->norm_table($tabel);
 
-// Konversi nilai desimal menjadi string
-$nilaiString = strval($nilaiDecimal);
+        $sql = "SELECT tanggal, SUM(jumlah) AS jumlah
+                FROM $tabel
+                WHERE id_barang = ?
+                  AND tanggal BETWEEN ? AND ?
+                GROUP BY tanggal";
 
-// Memeriksa apakah string mengandung koma
-if (strpos($nilaiString, '.') !== false) {
-    // Jika ya (nilai desimal), tampilkan string aslinya
-    return $nilaiString;
-} else {
-    // Jika tidak (nilai bulat), tampilkan nilai bulat
-    return round($nilaiDecimal);
-}
+        $stmt = $this->exec($sql, [$id_barang, $tgl_awal, $tgl_akhir]);
 
-}
+        $output = [];
 
-public function tampil_databarang()
- {
-      $query=$this->conn->query("SELECT * FROM tbl_barang ");
-      while ($d=mysqli_fetch_array($query)) {
-          $result[]=$d;
-      }
-      return $result;
- }
- 
-public function note($tabel,$id_barang,$tgl_awal,$tgl_akhir) 
-{
-   
-    $query = "SELECT tanggal, note  from $tabel  where id_barang  = '$id_barang' and  tanggal between '$tgl_awal' and '$tgl_akhir' group by tanggal";
-	$result = $this->conn->query($query);
+        while ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
+            $tgl = $row['tanggal'];
+            // sqlsrv sering balikin DateTime object untuk kolom date/datetime
+            if ($tgl instanceof DateTime) {
+                $tgl = $tgl->format('Y-m-d');
+            }
+            $output[$tgl] = $row['jumlah'];
+        }
+        return $output;
+    }
 
-    $output = [];
+    function stok_cek($tabel, $id_barang, $tgl_awal)
+    {
+        $tabel = $this->norm_table($tabel);
 
-    if (mysqli_num_rows($result) > 0) {
-        while ($row = mysqli_fetch_assoc($result)) {
-            $output[$row['tanggal']][] = $row['note'];
+        $sql = "SELECT SUM(jumlah) AS jumlah
+                FROM $tabel
+                WHERE id_barang = ?
+                  AND tanggal < ?";
+
+        $stmt = $this->exec($sql, [$id_barang, $tgl_awal]);
+        $row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC);
+
+        if ($row && $row['jumlah'] !== null) {
+            return $row['jumlah'];
+        }
+        return 0;
+    }
+
+    function stok_awal($id_barang, $tgl_awal)
+    {
+
+        $awal_in = $this->stok_cek('invgkg.tbl_barang_in', $id_barang, $tgl_awal);
+        $awal_out = $this->stok_cek('invgkg.tbl_barang_out', $id_barang, $tgl_awal);
+        $awal_stok = $awal_in - $awal_out;
+        return $awal_stok;
+    }
+
+    function formater($nilaiDecimal)
+    {
+
+        $nilaiDecimal = floatval($nilaiDecimal);
+
+        // Konversi nilai desimal menjadi string
+        $nilaiString = strval($nilaiDecimal);
+
+        // Memeriksa apakah string mengandung koma
+        if (strpos($nilaiString, '.') !== false) {
+            // Jika ya (nilai desimal), tampilkan string aslinya
+            return $nilaiString;
+        } else {
+            // Jika tidak (nilai bulat), tampilkan nilai bulat
+            return round($nilaiDecimal);
         }
     }
-    return $output;
-}
- 
- 
 
+    public function tampil_databarang()
+    {
+        $stmt = $this->exec("SELECT * FROM invgkg.tbl_barang");
+
+        $result = [];
+        while ($d = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
+            $result[] = $d;
+        }
+        return $result;
+    }
+
+    public function note($tabel, $id_barang, $tgl_awal, $tgl_akhir)
+    {
+        $tabel = $this->norm_table($tabel);
+
+        // di SQL Server: "GROUP BY tanggal" tapi SELECT note => error
+        // jadi ambil semua baris, lalu grouping di PHP (output tetap sama)
+        $sql = "SELECT tanggal, note
+                FROM $tabel
+                WHERE id_barang = ?
+                  AND tanggal BETWEEN ? AND ?
+                ORDER BY tanggal";
+
+        $stmt = $this->exec($sql, [$id_barang, $tgl_awal, $tgl_akhir]);
+
+        $output = [];
+
+        while ($row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC)) {
+            $tgl = $row['tanggal'];
+            if ($tgl instanceof DateTime) {
+                $tgl = $tgl->format('Y-m-d');
+            }
+            $output[$tgl][] = $row['note'];
+        }
+        return $output;
+    }
 }

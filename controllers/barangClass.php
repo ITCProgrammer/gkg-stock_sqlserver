@@ -1,114 +1,184 @@
 <?php
-class Barang extends Database{
-	public function __construct()
-    {
-        $this->conn = $this->connectMySQLi();
-    }
-    //cek stok Minimal
-    public function cekMinimal($idsub){
-     $data=$this->conn->query("SELECT * from tbl_barang WHERE jumlah<=jumlah_min_a and sub_dept='$idsub' ORDER BY kode ASC");
-      while ($x=mysqli_fetch_array($data)) {
-          $hasil[]=$x;
-      }
-      return $hasil;
-    }
-    public function jmlMinRow($idsub){
-      $data=$this->conn->query("SELECT count(*) as jml from tbl_barang WHERE jumlah<=jumlah_min_a and sub_dept='$idsub' ORDER BY kode ASC");
-      $row = mysqli_fetch_array($data);
-      return $row['jml'];
-    }
-    public function jmlStock($idsub){
-      $data=$this->conn->query("SELECT count(*) as jml from tbl_barang WHERE sub_dept='$idsub' ");
-      $row = mysqli_fetch_array($data);
-      return $row['jml'];
-    }
-    // ambil harga
-    public function ambilHarga($id)
-    {
-        $query = $this->conn->query("SELECT * FROM tbl_barang WHERE id='$id'");
-        $row = mysqli_fetch_array($query);
-        return $row['harga'];
-    }
+class Barang extends Database
+{
 
-    // proses input barang
-    public function input_barang($kode, $nama, $jenis, $harga, $satuan, $minimal,$minatas,$idsub,$project,$demand,$mc,$greige_lbr,$greige_grm,$kategori_bs)
-    {
-        $sql="INSERT INTO tbl_barang(kode,nama,jenis,harga,satuan,jumlah_min,jumlah_min_a,tgl_buat,tgl_update,sub_dept,project,demand,mc,greige_lbr,greige_grm,kategori_bs)
-		VALUES ('$kode','$nama','$jenis','$harga','$satuan','$minimal','$minatas',now(),now(),'$idsub','$project','$demand','$mc','$greige_lbr','$greige_grm','$kategori_bs')";
-		$this->conn->query($sql);
-    }
-
-    // tampilkan data dari tabel barang yang akan di edit
-    public function edit_barang($id)
-    {
-        $data=$this->conn->query("SELECT * FROM tbl_barang WHERE id='$id'");
-        while ($x=mysqli_fetch_array($data)) {
-            $hasil[]=$x;
-        }
-        return $hasil;
-    }
-
-    // proses update data Barang
-    public function update_barang($id, $nama, $jenis, $harga, $satuan, $minimal,$minatas,$project,$demand,$mc,$greige_lbr,$greige_grm,$kategori_bs)
-    {
-        $this->conn->query("UPDATE tbl_barang SET
-		nama='$nama',
-		jenis='$jenis',
-		harga='$harga',
-		satuan='$satuan',
-    	jumlah_min='$minimal',
-    	jumlah_min_a='$minatas',
-		tgl_update=now(),
-		project='$project',
-		demand='$demand',
-		mc='$mc',
-		greige_lbr='$greige_lbr',
-		greige_grm='$greige_grm',
-		kategori_bs='$kategori_bs'
-		WHERE id='$id'");
-    }
-    // proses delete data barang
-    public function hapus_barang($id)
-    {
-        $this->conn->query("DELETE FROM tbl_barang where id='$id'");
-    }
-
-    // tampilkan data dari tabel barang
-    public function tampil_data($idsub,$min)
-    {
-      if($min=="minimal"){
-        $where =" AND a.jumlah <= a.jumlah_min_a ";
-      }else{
-		$where =" ";  
-	  }
-        $data=$this->conn->query("SELECT
-			a.*,b.id as idb
-				FROM
-			tbl_barang a
-				LEFT JOIN tbl_barang_in b ON a.id=b.id_barang WHERE a.sub_dept='$idsub' and `status`='1' $where
-				GROUP BY a.id
-				ORDER BY
-			kode ASC");
-        while ($d=mysqli_fetch_array($data)) {
-            $result[]=$d;
-        }
-        return $result;
-    }
-	public function tampil_satuan()
+  public function __construct()
   {
-      $query=$this->conn->query("SELECT satuan FROM tbl_satuan");
-      while ($d=mysqli_fetch_array($query)) {
-          $result[]=$d;
-      }
-      return $result;
+    $this->conn = $this->connectMySQLi(); // koneksi sqlsrv (resource)
   }
-	public function tampil_databarang($idsub)
+
+  // cek stok Minimal
+  public function cekMinimal($idsub)
   {
-      $query=$this->conn->query("SELECT * FROM tbl_barang WHERE sub_dept='$idsub'");
-      while ($d=mysqli_fetch_array($query)) {
-          $result[]=$d;
-      }
-      return $result;
+    $sql = "SELECT * FROM invgkg.tbl_barang
+                WHERE jumlah <= jumlah_min_a AND sub_dept = ?
+                ORDER BY kode ASC";
+    $data = sqlsrv_query($this->conn, $sql, [$idsub]);
+    if ($data === false)
+      die(print_r(sqlsrv_errors(), true));
+
+    $hasil = [];
+    while ($x = sqlsrv_fetch_array($data, SQLSRV_FETCH_BOTH)) {
+      $hasil[] = $x;
+    }
+    return $hasil;
   }
-	
+
+  public function jmlMinRow($idsub)
+  {
+    $sql = "SELECT COUNT(*) AS jml
+                FROM invgkg.tbl_barang
+                WHERE jumlah <= jumlah_min_a AND sub_dept = ?";
+    $data = sqlsrv_query($this->conn, $sql, [$idsub]);
+    if ($data === false)
+      die(print_r(sqlsrv_errors(), true));
+
+    $row = sqlsrv_fetch_array($data, SQLSRV_FETCH_ASSOC);
+    return $row['jml'] ?? 0;
+  }
+
+  public function jmlStock($idsub)
+  {
+    $sql = "SELECT COUNT(*) AS jml
+                FROM invgkg.tbl_barang
+                WHERE sub_dept = ?";
+    $data = sqlsrv_query($this->conn, $sql, [$idsub]);
+    if ($data === false)
+      die(print_r(sqlsrv_errors(), true));
+
+    $row = sqlsrv_fetch_array($data, SQLSRV_FETCH_ASSOC);
+    return $row['jml'] ?? 0;
+  }
+
+  // ambil harga
+  public function ambilHarga($id)
+  {
+    $sql = "SELECT TOP 1 harga FROM invgkg.tbl_barang WHERE id = ?";
+    $query = sqlsrv_query($this->conn, $sql, [$id]);
+    if ($query === false)
+      die(print_r(sqlsrv_errors(), true));
+
+    $row = sqlsrv_fetch_array($query, SQLSRV_FETCH_ASSOC);
+    return $row['harga'] ?? null;
+  }
+
+  // proses input barang
+  public function input_barang($kode, $nama, $jenis, $harga, $satuan, $minimal, $minatas, $idsub, $project, $demand, $mc, $greige_lbr, $greige_grm, $kategori_bs)
+  {
+    $sql = "INSERT INTO invgkg.tbl_barang
+                (kode,nama,jenis,harga,satuan,jumlah_min,jumlah_min_a,tgl_buat,tgl_update,sub_dept,project,demand,mc,greige_lbr,greige_grm,kategori_bs)
+                VALUES (?,?,?,?,?,?,?,GETDATE(),GETDATE(),?,?,?,?,?,?,?)";
+
+    $params = [$kode, $nama, $jenis, $harga, $satuan, $minimal, $minatas, $idsub, $project, $demand, $mc, $greige_lbr, $greige_grm, $kategori_bs];
+
+    $stmt = sqlsrv_query($this->conn, $sql, $params);
+    if ($stmt === false)
+      die(print_r(sqlsrv_errors(), true));
+  }
+
+  // tampilkan data dari tabel barang yang akan di edit
+  public function edit_barang($id)
+  {
+    $sql = "SELECT * FROM invgkg.tbl_barang WHERE id = ?";
+    $data = sqlsrv_query($this->conn, $sql, [$id]);
+    if ($data === false)
+      die(print_r(sqlsrv_errors(), true));
+
+    $hasil = [];
+    while ($x = sqlsrv_fetch_array($data, SQLSRV_FETCH_BOTH)) {
+      $hasil[] = $x;
+    }
+    return $hasil;
+  }
+
+  // proses update data Barang
+  public function update_barang($id, $nama, $jenis, $harga, $satuan, $minimal, $minatas, $project, $demand, $mc, $greige_lbr, $greige_grm, $kategori_bs)
+  {
+    $sql = "UPDATE invgkg.tbl_barang SET
+                    nama = ?,
+                    jenis = ?,
+                    harga = ?,
+                    satuan = ?,
+                    jumlah_min = ?,
+                    jumlah_min_a = ?,
+                    tgl_update = GETDATE(),
+                    project = ?,
+                    demand = ?,
+                    mc = ?,
+                    greige_lbr = ?,
+                    greige_grm = ?,
+                    kategori_bs = ?
+                WHERE id = ?";
+
+    $params = [$nama, $jenis, $harga, $satuan, $minimal, $minatas, $project, $demand, $mc, $greige_lbr, $greige_grm, $kategori_bs, $id];
+
+    $stmt = sqlsrv_query($this->conn, $sql, $params);
+    if ($stmt === false)
+      die(print_r(sqlsrv_errors(), true));
+  }
+
+  // proses delete data barang
+  public function hapus_barang($id)
+  {
+    $sql = "DELETE FROM invgkg.tbl_barang WHERE id = ?";
+    $stmt = sqlsrv_query($this->conn, $sql, [$id]);
+    if ($stmt === false)
+      die(print_r(sqlsrv_errors(), true));
+  }
+
+  // tampilkan data dari tabel barang
+  public function tampil_data($idsub, $min)
+  {
+    $where = ($min == "minimal") ? " AND a.jumlah <= a.jumlah_min_a " : " ";
+
+    // SQL Server tidak boleh SELECT a.* dengan GROUP BY a.id, jadi pakai OUTER APPLY ambil 1 baris b
+    $sql = "SELECT a.*, b.id AS idb
+                FROM invgkg.tbl_barang a
+                OUTER APPLY (
+                    SELECT TOP 1 id
+                    FROM invgkg.tbl_barang_in
+                    WHERE id_barang = a.id
+                    ORDER BY id DESC
+                ) b
+                WHERE a.sub_dept = ? AND a.[status] = '1' $where
+                ORDER BY a.kode ASC";
+
+    $data = sqlsrv_query($this->conn, $sql, [$idsub]);
+    if ($data === false)
+      die(print_r(sqlsrv_errors(), true));
+
+    $result = [];
+    while ($d = sqlsrv_fetch_array($data, SQLSRV_FETCH_BOTH)) {
+      $result[] = $d;
+    }
+    return $result;
+  }
+
+  public function tampil_satuan()
+  {
+    $sql = "SELECT satuan FROM invgkg.tbl_satuan";
+    $query = sqlsrv_query($this->conn, $sql);
+    if ($query === false)
+      die(print_r(sqlsrv_errors(), true));
+
+    $result = [];
+    while ($d = sqlsrv_fetch_array($query, SQLSRV_FETCH_BOTH)) {
+      $result[] = $d;
+    }
+    return $result;
+  }
+
+  public function tampil_databarang($idsub)
+  {
+    $sql = "SELECT * FROM invgkg.tbl_barang WHERE sub_dept = ?";
+    $query = sqlsrv_query($this->conn, $sql, [$idsub]);
+    if ($query === false)
+      die(print_r(sqlsrv_errors(), true));
+
+    $result = [];
+    while ($d = sqlsrv_fetch_array($query, SQLSRV_FETCH_BOTH)) {
+      $result[] = $d;
+    }
+    return $result;
+  }
 }

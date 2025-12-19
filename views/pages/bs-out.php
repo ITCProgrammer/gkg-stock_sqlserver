@@ -1,4 +1,7 @@
-<?php include_once('controllers/bsController.php'); ?>
+<?php 
+include_once('controllers/bsController.php');
+include_once('../../helpers.php');
+?>
 
 <div class="row">
     <div class="col-xs-12">
@@ -11,7 +14,7 @@
                         <thead class="btn-primary">
                             <tr>
                                 <th></th>
-                                <th>Id Surat Jalan</th>
+                                <th>Id Surat Jalan ase</th>
                                 <th>Tanggal Masuk</th>
                                 <th>Barang</th>
                                 <th>Jenis Kain</th>
@@ -38,7 +41,11 @@
                                             <input type="checkbox" name="barang[]" value="<?= $data['id'] ?>">
                                         </td>
                                         <td><?= str_pad($data['surat_jalan_id'], 6, '0', STR_PAD_LEFT) ?></td>
-                                        <td><?= $data['tanggal'] ?></td>
+                                        <td><?php
+                                        // print_r($data['tanggal']);
+                                            $tgl = formatDateTime($data['tanggal'], 'Y-m-d H:i:s');
+                                            echo $tgl;
+                                            ?></td>
                                         <td><?= $data['nama'] ?></td>
                                         <td><?= $data['jenis_kain'] ?></td>
                                         <td><?= $data['demand'] ?></td>
