@@ -273,7 +273,7 @@ class Bs extends Database
             JOIN invgkg.tbl_surat_jalan_detail c ON b.detail_id_surat_jalan = c.id
             JOIN invgkg.tbl_barang_bs d ON c.barang_bs_id = d.id
             WHERE a.id = ?
-            ORDER BY a.id DESC
+            ORDER BY a.id desc, d.jenis_kain desc, b.id asc
         ";
 		$stmt = $this->must(sqlsrv_query($this->conn, $sql, [$id]), "Gagal bs_in_detail_out()");
 		return $this->fetchAll($stmt);

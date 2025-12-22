@@ -233,7 +233,7 @@ class BarangKeluar extends Database
         // sanitize: buang selain angka (hindari "133/")
         $id = (int) preg_replace('/\D+/', '', (string) $id);
 
-        $sql = "SELECT a.*, b.tanggal, b.jumlah as jml, b.total_harga, b.note, b.userid
+        $sql = "SELECT a.*, b.tanggal, b.jumlah as jml_out, b.total_harga, b.note, b.userid
             FROM invgkg.tbl_barang a
             INNER JOIN invgkg.tbl_barang_out b ON a.id=b.id_barang
             WHERE b.id_barang = ?

@@ -233,7 +233,7 @@ $tothrgout = 0;
                   foreach ($dataOut as $r1) {
                     $no1++;
                     $bgcolor1 = ($col1++ & 1) ? 'gainsboro' : 'antiquewhite';
-                   $jml1 = $r['jml'] ?? '';
+                   $jml1 = $r1['jml_out'] ?? '';
                     // FIX tanggal DateTime
                     $tgl1 = $r1['tanggal'] ?? '';
                     if ($tgl1 instanceof DateTime)

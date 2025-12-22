@@ -49,7 +49,7 @@ $idsub = $_SESSION['subQC'] ?? '';
           <div class="col-sm-3">
             <div class="input-group date">
               <div class="input-group-addon"><i class="fa fa-calendar"></i></div>
-              <input name="awal" type="text" class="form-control pull-right" id="datepicker" placeholder="Tanggal Awal"
+              <input name="awal" type="date" class="form-control pull-right" id="awal" placeholder="Tanggal Awal"
                 value="<?php echo $Awal; ?>" autocomplete="off" />
             </div>
           </div>
@@ -59,7 +59,7 @@ $idsub = $_SESSION['subQC'] ?? '';
           <div class="col-sm-3">
             <div class="input-group date">
               <div class="input-group-addon"><i class="fa fa-calendar"></i></div>
-              <input name="akhir" type="text" class="form-control pull-right" id="datepicker1"
+              <input name="akhir" type="date" class="form-control pull-right" id="akhir"
                 placeholder="Tanggal Akhir" value="<?php echo $Akhir; ?>" autocomplete="off" />
             </div>
           </div>
@@ -105,9 +105,8 @@ $idsub = $_SESSION['subQC'] ?? '';
           $no = 1;
           $col = 0;
 
-          if ($Awal == '' || $Akhir == '' || $idsub == '') {
-            echo "<tr><td colspan='10' align='center'>Silakan pilih Tanggal Awal & Akhir</td></tr>";
-          } else {
+          if ($Awal != '' && $Akhir != '' && $idsub != '') {
+      
             $rows = $barangout->tampildataout_tgl($Awal, $Akhir, $idsub);
 
             if (!is_array($rows) || count($rows) == 0) {

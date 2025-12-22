@@ -54,7 +54,7 @@ $tglstkak_str = fmtDate($tglstkak);
           <div class="col-sm-3">
             <div class="input-group date">
               <div class="input-group-addon"><i class="fa fa-calendar"></i></div>
-              <input name="awal" type="text" class="form-control pull-right" id="datepicker"
+              <input name="awal" type="date" class="form-control pull-right" id="awal"
                      placeholder="Tanggal Awal" value="<?php echo $Awal; ?>" autocomplete="off" required />
             </div>
           </div>
@@ -64,7 +64,7 @@ $tglstkak_str = fmtDate($tglstkak);
           <div class="col-sm-3">
             <div class="input-group date">
               <div class="input-group-addon"><i class="fa fa-calendar"></i></div>
-              <input name="akhir" type="text" class="form-control pull-right" id="datepicker1"
+              <input name="akhir" type="date" class="form-control pull-right" id="akhir"
                      placeholder="Tanggal Akhir" value="<?php echo $Akhir; ?>" autocomplete="off" required />
             </div>
           </div>
