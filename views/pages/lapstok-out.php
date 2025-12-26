@@ -2,14 +2,12 @@
 error_reporting(0);
 session_start();
 
-$barang = new Barang();
+$barang    = new Barang();
 $barangout = new BarangKeluar();
-$db = new Database();
+$db        = new Database();
 
-// FIX: koneksi SQL Server
 $db->connectMySQLi();
 
-// FIX: idsub dari session
 $idsub = $_SESSION['subQC'] ?? '';
 ?>
 
@@ -24,12 +22,17 @@ $idsub = $_SESSION['subQC'] ?? '';
 
 <body>
   <?php
-  $Awal = isset($_POST['awal']) ? $_POST['awal'] : '';
+  $Awal  = isset($_POST['awal']) ? $_POST['awal'] : '';
   $Akhir = isset($_POST['akhir']) ? $_POST['akhir'] : '';
 
-  $cek = 0;
+  $isSearch = ($_SERVER['REQUEST_METHOD'] === 'POST');
+
+  $rows = [];
+  $hasData = false;
+
   if ($Awal != '' && $Akhir != '' && $idsub != '') {
-    $cek = $barangout->cektgl($Awal, $Akhir, $idsub);
+    $rows = $barangout->tampildataout_tgl($Awal, $Akhir, $idsub);
+    $hasData = (is_array($rows) && count($rows) > 0);
   }
   ?>
 
@@ -77,7 +80,7 @@ $idsub = $_SESSION['subQC'] ?? '';
     <div class="box-header with-border">
       <h3 class="box-title">Details Data</h3>
 
-      <?php if ($cek > 0) { ?>
+      <?php if ($hasData) { ?>
         <a href="cetak/lapstokout/<?php echo $Awal; ?>/<?php echo $Akhir; ?>/<?php echo $idsub; ?>"
           class="btn btn-danger pull-right" target="_blank">Cetak</a>
       <?php } ?>
@@ -102,44 +105,35 @@ $idsub = $_SESSION['subQC'] ?? '';
 
         <tbody>
           <?php
-          $no = 1;
+          $no  = 1;
           $col = 0;
 
-          if ($Awal != '' && $Akhir != '' && $idsub != '') {
-      
-            $rows = $barangout->tampildataout_tgl($Awal, $Akhir, $idsub);
+          if ($hasData) {
+            foreach ($rows as $row) {
+              $bgcolor = ($col++ & 1) ? 'gainsboro' : 'antiquewhite';
 
-            if (!is_array($rows) || count($rows) == 0) {
-              echo "<tr><td colspan='10' align='center'>Data kosong</td></tr>";
-            } else {
-              foreach ($rows as $row) {
-                $bgcolor = ($col++ & 1) ? 'gainsboro' : 'antiquewhite';
-
-                // FIX: tanggal sqlsrv bisa DateTime object
-                $tgl = $row['tanggal'] ?? '';
-                if ($tgl instanceof DateTime) {
-                  $tgl = $tgl->format('Y-m-d');
-                }
-
-                // FIX: total_harga NULL tampil 0.00
-                $total = $row['total_harga'];
-                $total = ($total === null || $total === '') ? 0 : (float) $total;
-                ?>
-                <tr bgcolor="<?php echo $bgcolor; ?>">
-                  <td align="center"><?php echo $no; ?></td>
-                  <td align="center"><?php echo $tgl; ?></td>
-                  <td align="center"><?php echo $row['kode'] ?? ''; ?></td>
-                  <td align="left"><?php echo $row['nama'] ?? ''; ?></td>
-                  <td align="right"><?php echo $row['jumlah'] ?? 0; ?></td>
-                  <td align="center"><?php echo $row['satuan'] ?? ''; ?></td>
-                  <td align="right"><?php echo $row['harga'] ?? 0; ?></td>
-                  <td align="right"><?php echo number_format($total, 2, ".", ""); ?></td>
-                  <td align="left"><?php echo $row['note'] ?? ''; ?></td>
-                  <td align="center"><?php echo $row['userid'] ?? ''; ?></td>
-                </tr>
-                <?php
-                $no++;
+              $tgl = $row['tanggal'] ?? '';
+              if ($tgl instanceof DateTime) {
+                $tgl = $tgl->format('Y-m-d');
               }
+
+              $total = $row['total_harga'] ?? 0;
+              $total = ($total === null || $total === '') ? 0 : (float) $total;
+              ?>
+              <tr bgcolor="<?php echo $bgcolor; ?>">
+                <td align="center"><?php echo $no; ?></td>
+                <td align="center"><?php echo $tgl; ?></td>
+                <td align="center"><?php echo $row['kode'] ?? ''; ?></td>
+                <td align="left"><?php echo $row['nama'] ?? ''; ?></td>
+                <td align="right"><?php echo $row['jumlah'] ?? 0; ?></td>
+                <td align="center"><?php echo $row['satuan'] ?? ''; ?></td>
+                <td align="right"><?php echo $row['harga'] ?? 0; ?></td>
+                <td align="right"><?php echo number_format($total, 2, ".", ""); ?></td>
+                <td align="left"><?php echo $row['note'] ?? ''; ?></td>
+                <td align="center"><?php echo $row['userid'] ?? ''; ?></td>
+              </tr>
+              <?php
+              $no++;
             }
           }
           ?>
@@ -148,7 +142,30 @@ $idsub = $_SESSION['subQC'] ?? '';
     </div>
   </div>
 
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var isSearch = <?php echo ($isSearch ? 'true' : 'false'); ?>;
+      var hasData  = <?php echo ($hasData ? 'true' : 'false'); ?>;
+
+      var emptyMsg = (isSearch && !hasData) ? 'Data Kosong' : 'No data available in table';
+
+      if (window.jQuery && jQuery.fn && jQuery.fn.dataTable) {
+        if (jQuery.fn.dataTable.isDataTable('#example2')) {
+          var table = jQuery('#example2').DataTable();
+          table.settings()[0].oLanguage.sEmptyTable  = emptyMsg;
+          table.settings()[0].oLanguage.sZeroRecords = 'Data Kosong';
+          table.draw(false);
+        } else {
+          jQuery('#example2').DataTable({
+            language: {
+              emptyTable: emptyMsg,
+              zeroRecords: 'Data Kosong'
+            }
+          });
+        }
+      }
+    });
+  </script>
+
 </body>
-
 </html>
-

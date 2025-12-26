@@ -26,10 +26,15 @@ $idsub = $_SESSION['subQC'] ?? '';
   $Akhir = isset($_POST['akhir']) ? $_POST['akhir'] : '';
   $Kode = isset($_POST['kode']) ? $_POST['kode'] : '';
 
-  // init variabel
-  $cek = 0;
+  // Flag: sudah klik Search atau belum
+  $isSearch = ($_SERVER['REQUEST_METHOD'] === 'POST');
+
+  $rows = [];
+  $hasData = false;
+
   if ($Awal != '' && $Akhir != '' && $idsub != '') {
-    $cek = $barangin->cektgl($Awal, $Akhir, $idsub);
+    $rows = $barangin->tampildatain_tgl($Awal, $Akhir, $idsub);
+    $hasData = (is_array($rows) && count($rows) > 0);
   }
   ?>
 
@@ -59,8 +64,8 @@ $idsub = $_SESSION['subQC'] ?? '';
           <div class="col-sm-3">
             <div class="input-group date">
               <div class="input-group-addon"><i class="fa fa-calendar"></i></div>
-              <input name="akhir" type="date" class="form-control pull-right" id="akhir"
-                placeholder="Tanggal Akhir" value="<?php echo $Akhir; ?>" autocomplete="off" />
+              <input name="akhir" type="date" class="form-control pull-right" id="akhir" placeholder="Tanggal Akhir"
+                value="<?php echo $Akhir; ?>" autocomplete="off" />
             </div>
           </div>
 
@@ -78,7 +83,7 @@ $idsub = $_SESSION['subQC'] ?? '';
     <div class="box-header with-border">
       <h3 class="box-title">Details Data</h3>
 
-      <?php if ($cek > 0) { ?>
+      <?php if ($hasData) { ?>
         <a href="cetak/lapstokin/<?php echo $Awal; ?>/<?php echo $Akhir; ?>/<?php echo $_SESSION['subQC']; ?>"
           class="btn btn-danger pull-right" target="_blank">Cetak</a>
       <?php } ?>
@@ -106,36 +111,29 @@ $idsub = $_SESSION['subQC'] ?? '';
           $no = 1;
           $col = 0;
 
-          // jangan query kalau tanggal belum diisi
-          if ($Awal != '' && $Akhir != '' && $idsub != '') {
-            $rows = $barangin->tampildatain_tgl($Awal, $Akhir, $idsub);
+          if ($hasData) {
+            foreach ($rows as $row) {
+              $bgcolor = ($col++ & 1) ? 'gainsboro' : 'antiquewhite';
 
-            if (!is_array($rows) || count($rows) == 0) {
-              echo "<tr><td colspan='10' align='center'>Data kosong</td></tr>";
-            } else {
-              foreach ($rows as $row) {
-                $bgcolor = ($col++ & 1) ? 'gainsboro' : 'antiquewhite';
-
-                $tgl = $row['tanggal'] ?? '';
-                if ($tgl instanceof DateTime) {
-                  $tgl = $tgl->format('Y-m-d');
-                }
-                ?>
-                <tr bgcolor="<?php echo $bgcolor; ?>">
-                  <td align="center"><?php echo $no; ?></td>
-                  <td align="center"><?php echo $tgl; ?></td>
-                  <td align="center"><?php echo $row['kode'] ?? ''; ?></td>
-                  <td align="left"><?php echo $row['nama'] ?? ''; ?></td>
-                  <td align="center"><?php echo $row['jenis'] ?? ''; ?></td>
-                  <td align="right"><?php echo $row['jumlah'] ?? 0; ?></td>
-                  <td align="center"><?php echo $row['satuan'] ?? ''; ?></td>
-                  <td align="right"><?php echo $row['harga'] ?? 0; ?></td>
-                  <td align="left"><?php echo $row['note'] ?? ''; ?></td>
-                  <td align="center"><?php echo $row['userid'] ?? ''; ?></td>
-                </tr>
-                <?php
-                $no++;
+              $tgl = $row['tanggal'] ?? '';
+              if ($tgl instanceof DateTime) {
+                $tgl = $tgl->format('Y-m-d');
               }
+              ?>
+              <tr bgcolor="<?php echo $bgcolor; ?>">
+                <td align="center"><?php echo $no; ?></td>
+                <td align="center"><?php echo $tgl; ?></td>
+                <td align="center"><?php echo $row['kode'] ?? ''; ?></td>
+                <td align="left"><?php echo $row['nama'] ?? ''; ?></td>
+                <td align="center"><?php echo $row['jenis'] ?? ''; ?></td>
+                <td align="right"><?php echo $row['jumlah'] ?? 0; ?></td>
+                <td align="center"><?php echo $row['satuan'] ?? ''; ?></td>
+                <td align="right"><?php echo $row['harga'] ?? 0; ?></td>
+                <td align="left"><?php echo $row['note'] ?? ''; ?></td>
+                <td align="center"><?php echo $row['userid'] ?? ''; ?></td>
+              </tr>
+              <?php
+              $no++;
             }
           }
           ?>
@@ -143,6 +141,31 @@ $idsub = $_SESSION['subQC'] ?? '';
       </table>
     </div>
   </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      var isSearch = <?php echo ($isSearch ? 'true' : 'false'); ?>;
+      var hasData = <?php echo ($hasData ? 'true' : 'false'); ?>;
+
+      var emptyMsg = (isSearch && !hasData) ? 'Data Kosong' : 'No data available in table';
+
+      if (window.jQuery && jQuery.fn && jQuery.fn.dataTable) {
+        if (jQuery.fn.dataTable.isDataTable('#example2')) {
+          var table = jQuery('#example2').DataTable();
+          table.settings()[0].oLanguage.sEmptyTable = emptyMsg;
+          table.settings()[0].oLanguage.sZeroRecords = 'Data Kosong';
+          table.draw(false);
+        } else {
+          jQuery('#example2').DataTable({
+            language: {
+              emptyTable: emptyMsg,
+              zeroRecords: 'Data Kosong'
+            }
+          });
+        }
+      }
+    });
+  </script>
 
 </body>
 
