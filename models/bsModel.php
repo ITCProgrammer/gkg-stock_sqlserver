@@ -115,10 +115,11 @@ class Bs extends Database
 	public function bs_input_sj($tanggal)
 	{
 		// return last insert id (SQL Server)
-		$sql = "INSERT INTO invgkg.tbl_surat_jalan(tanggal) VALUES (?); SELECT SCOPE_IDENTITY() AS id;";
-		$stmt = $this->must(sqlsrv_query($this->conn, $sql, [$tanggal]), "Gagal bs_input_sj()");
-		$row = $this->fetchOne($stmt);
-		return $row ? (int) $row['id'] : 0;
+		$sql = "INSERT INTO invgkg.tbl_surat_jalan(tanggal) VALUES (?); SELECT SCOPE_IDENTITY()";
+		$stmt = sqlsrv_query($this->conn, $sql, [$tanggal]);
+		sqlsrv_next_result($stmt); 
+		sqlsrv_fetch($stmt); 
+		return sqlsrv_get_field($stmt, 0);
 	}
 
 	public function bs_input_sj_detail($surat_jalan_id, $barang_bs_id, $qty_masuk, $lokasi_masuk, $project, $demand, $mc, $lbr, $grm)
