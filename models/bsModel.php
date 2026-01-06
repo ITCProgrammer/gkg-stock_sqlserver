@@ -139,21 +139,38 @@ class Bs extends Database
 	public function bs_out()
 	{
 		$sql = "
-            SELECT
-                a.*, b.tanggal, c.nama,
-                a.qty_masuk - ISNULL(x.qty_keluar, 0) AS qty_sisa,
-                c.jenis_kain
-            FROM invgkg.tbl_surat_jalan_detail a
-            JOIN invgkg.tbl_surat_jalan b ON a.surat_jalan_id = b.id
-            JOIN invgkg.tbl_barang_bs c ON a.barang_bs_id = c.id
-            LEFT JOIN (
-                SELECT detail_id_surat_jalan, SUM(qty_keluar_detail) AS qty_keluar
-                FROM invgkg.tbl_sj_out_detail
-                GROUP BY detail_id_surat_jalan
-            ) x ON a.id = x.detail_id_surat_jalan
-            ORDER BY a.id
-        ";
-		$stmt = $this->must(sqlsrv_query($this->conn, $sql), "Gagal bs_out()");
+        SELECT
+            a.id,
+            a.surat_jalan_id,
+            a.qty_masuk,
+            a.demand,
+            a.mc,
+            a.lokasi_masuk,
+            b.tanggal,
+            c.nama,
+            c.jenis_kain,
+            CAST(a.qty_masuk - ISNULL(x.qty_keluar, 0) AS FLOAT) AS qty_sisa
+        FROM invgkg.tbl_surat_jalan_detail a
+        JOIN invgkg.tbl_surat_jalan b 
+            ON a.surat_jalan_id = b.id
+        JOIN invgkg.tbl_barang_bs c 
+            ON a.barang_bs_id = c.id
+        LEFT JOIN (
+            SELECT 
+                detail_id_surat_jalan, 
+                SUM(qty_keluar_detail) AS qty_keluar
+            FROM invgkg.tbl_sj_out_detail
+            GROUP BY detail_id_surat_jalan
+        ) x ON a.id = x.detail_id_surat_jalan
+        WHERE CAST(a.qty_masuk - ISNULL(x.qty_keluar, 0) AS FLOAT) > 0
+        ORDER BY a.id
+    ";
+
+		$stmt = $this->must(
+			sqlsrv_query($this->conn, $sql),
+			"Gagal bs_out()"
+		);
+
 		return $this->fetchAll($stmt);
 	}
 

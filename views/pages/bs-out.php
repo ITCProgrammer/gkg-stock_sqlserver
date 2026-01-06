@@ -1,6 +1,23 @@
 <?php 
 include_once('controllers/bsController.php');
-include_once('../../helpers.php');
+include_once('../helpers.php');
+function formatDateTime($date, $format = "Y-m-d H:i:s")
+{
+    if (empty($date)) {
+        return '';
+    }
+
+    if ($date instanceof DateTime) {
+        return $date->format($format);
+    }
+
+    try {
+        return (new DateTime($date))->format($format);
+    } catch (Exception $e) {
+        return '';
+    }
+
+}
 ?>
 
 <div class="row">
@@ -10,31 +27,30 @@ include_once('../../helpers.php');
             <div class="box-body">
 
                 <form action="bs-out-preview" method="post">
-                    <table width="100%" class="table table-bordered table-hover example_allpage">
+                    <table width="100%" class="table table-bordered table-hover"  id="example1">
                         <thead class="btn-primary">
                             <tr>
                                 <th></th>
-                                <th>Id Surat Jalan ase</th>
+                                <th>Id Surat Jalan</th>
                                 <th>Tanggal Masuk</th>
                                 <th>Barang</th>
                                 <th>Jenis Kain</th>
                                 <th>PO</th>
                                 <th>Keterangan</th>
                                 <th>Qty Masuk</th>
-
                                 <th>Qty Sisa</th>
                                 <th>Lokasi Masuk</th>
                             </tr>
                         </thead>
                         <tbody>
                             <?php
-
+// print_r($model->bs_out());/
                             $no = 1;
                             $array = [];
                             foreach ($model->bs_out() as $data) {
                                 if ($data['qty_sisa'] > 0) {
 
-                                    $array[] = 1
+                                    $array[] = 1;
                                         ?>
                                     <tr>
                                         <td>

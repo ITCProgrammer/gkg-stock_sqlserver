@@ -18,6 +18,23 @@ if ( isset($_POST['barang'])) {
 	}
 }
 
+function formatDateTime($date, $format = "Y-m-d H:i:s")
+{
+	if (empty($date)) {
+		return '';
+	}
+
+	if ($date instanceof DateTime) {
+		return $date->format($format);
+	}
+
+	try {
+		return (new DateTime($date))->format($format);
+	} catch (Exception $e) {
+		return '';
+	}
+
+}
 ?>
 
 
@@ -81,7 +98,13 @@ if ( isset($_POST['barang'])) {
 			<tr>
 				<td><?=$no++?></td>
 				<td><?=str_pad($data['surat_jalan_id'], 6, '0', STR_PAD_LEFT)?></td>
-				<td><?=$data['tanggal']?></td>
+				<td>
+					<?php
+					$tgl = formatDateTime($data['tanggal'], 'Y-m-d H:i:s');
+					echo $tgl;
+					?>
+				
+				</td>
 				<td><?=$data['nama']?></td>
 				<td><?=$data['jenis_kain']?></td>
 				<td><?=$data['lokasi_masuk']?></td>
