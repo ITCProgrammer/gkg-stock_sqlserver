@@ -239,9 +239,19 @@ function Footer()
 	
 }
 #ambil data dari DB dan masukkan ke array
-$data = array();
-foreach($barangout->tampildataout_tgl($_GET['tgl1'],$_GET['tgl2'],$idsub) as $rowd){
-	array_push($data, $rowd);
+$data = [];
+
+$result = $barangout->tampildataout_tgl($_GET['tgl1'], $_GET['tgl2'], $idsub);
+
+if (!empty($result)) {
+	foreach ($result as $rowd) {
+
+		if (isset($rowd['tanggal']) && $rowd['tanggal'] instanceof DateTime) {
+			$rowd['tanggal'] = $rowd['tanggal']->format('d-m-Y');
+		}
+
+		$data[] = $rowd; 
+	}
 }
 
 //pilihan
