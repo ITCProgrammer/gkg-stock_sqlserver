@@ -210,21 +210,72 @@ class Bs extends Database
 		$this->must(sqlsrv_query($this->conn, $sql, [$qty_keluar, $qty_sisa, $id]), "Gagal bs_update_detail()");
 	}
 
+	// public function bs_input_sj_out()
+	// {
+	// 	$tanggal = date("Y-m-d H:i");
+	// 	$sql = "INSERT INTO invgkg.tbl_sj_out(tanggal) VALUES (?); SELECT SCOPE_IDENTITY() AS id;";
+	// 	$stmt = $this->must(sqlsrv_query($this->conn, $sql, [$tanggal]), "Gagal bs_input_sj_out()");
+	// 	$row = $this->fetchOne($stmt);
+	// 	return $row ? (int) $row['id'] : 0;
+	// }
 	public function bs_input_sj_out()
 	{
-		$tanggal = date("Y-m-d H:i");
-		$sql = "INSERT INTO invgkg.tbl_sj_out(tanggal) VALUES (?); SELECT SCOPE_IDENTITY() AS id;";
-		$stmt = $this->must(sqlsrv_query($this->conn, $sql, [$tanggal]), "Gagal bs_input_sj_out()");
-		$row = $this->fetchOne($stmt);
-		return $row ? (int) $row['id'] : 0;
+		$tanggal = date("Y-m-d H:i:s");
+
+		$sql = "
+        INSERT INTO invgkg.tbl_sj_out(tanggal)
+        VALUES (?);
+
+        SELECT CAST(SCOPE_IDENTITY() AS INT) AS id;
+    ";
+
+		$stmt = $this->must(
+			sqlsrv_query($this->conn, $sql, [$tanggal]),
+			"Gagal bs_input_sj_out()"
+		);
+
+		// pindah ke result set SELECT
+		if (sqlsrv_next_result($stmt) === false) {
+			throw new Exception("Gagal sqlsrv_next_result() di bs_input_sj_out()");
+		}
+
+		$row = sqlsrv_fetch_array($stmt, SQLSRV_FETCH_ASSOC);
+
+		$id = $row && isset($row['id']) ? (int) $row['id'] : 0;
+		if ($id <= 0) {
+			throw new Exception("ID SJ OUT tidak terbaca (hasil 0).");
+		}
+
+		return $id;
 	}
 
+	// public function bs_update_detail_out($sj_out_id, $detail_id_surat_jalan, $qty_keluar_detail)
+	// {
+	// 	// di kode asli ada variabel $sisa/$value yang tidak ada -> kita abaikan, tetap INSERT sesuai tujuan
+	// 	$sql = "INSERT INTO invgkg.tbl_sj_out_detail(sj_out_id, detail_id_surat_jalan, qty_keluar_detail) VALUES (?, ?, ?)";
+	// 	$this->must(sqlsrv_query($this->conn, $sql, [$sj_out_id, $detail_id_surat_jalan, $qty_keluar_detail]), "Gagal bs_update_detail_out()");
+	// }
 	public function bs_update_detail_out($sj_out_id, $detail_id_surat_jalan, $qty_keluar_detail)
 	{
-		// di kode asli ada variabel $sisa/$value yang tidak ada -> kita abaikan, tetap INSERT sesuai tujuan
-		$sql = "INSERT INTO invgkg.tbl_sj_out_detail(sj_out_id, detail_id_surat_jalan, qty_keluar_detail) VALUES (?, ?, ?)";
-		$this->must(sqlsrv_query($this->conn, $sql, [$sj_out_id, $detail_id_surat_jalan, $qty_keluar_detail]), "Gagal bs_update_detail_out()");
+		$sj_out_id = (int) $sj_out_id;
+		if ($sj_out_id <= 0) {
+			throw new Exception("sj_out_id kosong/0. Pastikan ambil dari bs_input_sj_out()");
+		}
+
+		$sql = "
+        INSERT INTO invgkg.tbl_sj_out_detail
+            (sj_out_id, detail_id_surat_jalan, qty_keluar_detail)
+        VALUES (?, ?, ?)
+    ";
+
+		$this->must(
+			sqlsrv_query($this->conn, $sql, [$sj_out_id, $detail_id_surat_jalan, $qty_keluar_detail]),
+			"Gagal bs_update_detail_out()"
+		);
+
+		return true;
 	}
+
 
 	public function bs_out_last_detail()
 	{
